@@ -17,9 +17,6 @@ import pandas as pd
 
 
 
-
-
-
 # initialize our Flask application and the Keras model
 app = flask.Flask(__name__)
 
