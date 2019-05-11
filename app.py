@@ -6,15 +6,15 @@ from skimage.io import imsave
 import scipy.misc
 from PIL import Image
 import io
-from io import BytesIO, StringIO
-from skimage.color import rgb2lab, lab2rgb, rgb2gray, xyz2lab
-from flask import send_file, abort, Response
+from io import BytesIO
+from skimage.color import rgb2lab, lab2rgb, rgb2gray
+from flask import abort
 import base64
-
 
 
 # initialize our Flask application and the Keras model
 app = flask.Flask(__name__)
+
 
 def init():
     global model,graph
@@ -53,13 +53,25 @@ def predict():
     final_image = None
     try:
         if flask.request.method == "POST":
+            print("post reeived")
             form_data = flask.request.form
+            print(form_data)
+            print(type(form_data))
             image_data = form_data['image']
-            encoded_data = image_data.split(',')[1]
+            print("image data scrubbed")
+            print(image_data)
+            encoded_data = image_data
+            print('encoded')
+            print(encoded_data)
             encoded_data = str.encode(encoded_data)
+            print(type(encoded_data))
+            print(encoded_data)
             encoded_data = base64.b64decode(encoded_data)
             buf = io.BytesIO(encoded_data)
+            print("after buf")
             im = Image.open( buf)
+            print("PIl IMAGE")
+            print(type(im))
 
             image = scipy.misc.imresize(im, (64, 64))
             sonnan_X = rgb2lab(1.0 / 255 * image)[:, :, 0]
@@ -69,7 +81,7 @@ def predict():
             sonnan_Y = sonnan_Y.reshape(1, 64, 64, 2)
 
             with graph.as_default():
-                output =   model.predict(sonnan_X)
+                output = model.predict(sonnan_X)
                 output = output * 128
                 canvas = np.zeros((64, 64, 3))
                 canvas[:, :, 0] = sonnan_X[0][:, :, 0]
@@ -84,8 +96,8 @@ def predict():
 
                 final_image = lab2rgb(canvas)  # converted image from LAB
 
-    except Exception as e:
-        print(e)
+    except Exception as e: print(e)
+        #return abort(404, description="Incorrect Image sent through bro")
 
     if final_image is not None:
         im = Image.fromarray(np.uint8(final_image * 255))
